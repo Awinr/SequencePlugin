@@ -55,23 +55,23 @@ tasks {
 //        targetCompatibility = "1.9"
 //    }
 
-    patchPluginXml {
-        version.set(properties("pluginVersion"))
-        sinceBuild.set(properties("pluginSinceBuild"))
-        untilBuild.set(properties("pluginUntilBuild"))
-        pluginDescription.set(
-            File(projectDir, "README.md").readText().lines().run {
-                val start = "<!-- Plugin description -->"
-                val end = "<!-- Plugin description end -->"
-
-                if (!containsAll(listOf(start, end))) {
-                    throw GradleException("Plugin description section not found in README.md:\n$start ... $end")
-                }
-                subList(indexOf(start) + 1, indexOf(end))
-            }.joinToString("\n").run { markdownToHTML(this) }
-        )
-        changeNotes.set(provider { changelog.getLatest().toHTML() })
-    }
+//    patchPluginXml {
+//        version.set(properties("pluginVersion"))
+//        sinceBuild.set(properties("pluginSinceBuild"))
+//        untilBuild.set(properties("pluginUntilBuild"))
+//        pluginDescription.set(
+//            File(projectDir, "README.md").readText().lines().run {
+//                val start = "<!-- Plugin description -->"
+//                val end = "<!-- Plugin description end -->"
+//
+//                if (!containsAll(listOf(start, end))) {
+//                    throw GradleException("Plugin description section not found in README.md:\n$start ... $end")
+//                }
+//                subList(indexOf(start) + 1, indexOf(end))
+//            }.joinToString("\n").run { markdownToHTML(this) }
+//        )
+//        changeNotes.set(provider { changelog.getLatest().toHTML() })
+//    }
 
     runPluginVerifier {
         ideVersions.set(properties("pluginVerifierIdeVersions").split(',').map(String::trim).filter(String::isNotEmpty))
@@ -92,6 +92,11 @@ tasks {
 
     compileTestKotlin {
         kotlinOptions.jvmTarget = "11"
+    }
+
+    // 解决插件中显示中文乱码的问题
+    withType(JavaCompile::class.java) {
+        options.encoding = "UTF-8"
     }
 }
 

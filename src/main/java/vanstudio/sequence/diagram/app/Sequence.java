@@ -158,8 +158,8 @@ public class Sequence extends JFrame implements PropertyChangeListener {
     }
 
     /**
-     * This method should be called whenever an exception is
-     * caught. It will display the exception to the user.
+    * 当异常发生时，应该调用该方法
+     * 捕捉。它将向用户显示异常。
      *
      * @param e the exception
      */

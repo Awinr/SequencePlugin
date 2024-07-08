@@ -17,7 +17,7 @@ import vanstudio.sequence.openapi.ActionFinder;
 import vanstudio.sequence.openapi.ElementTypeFinder;
 
 /**
- * Show Sequence generate options dialog.
+ * 显示序列生成选项对话框。
  */
 public class ShowSequenceAction extends AnAction implements DumbAware {
 
@@ -25,15 +25,17 @@ public class ShowSequenceAction extends AnAction implements DumbAware {
     }
 
     /**
-     * Enable or disable the menu base on file type. Current only java file will enable the menu.
+     *根据文件类型启用或禁用菜单。当前只有 java 文件才能启用菜单。
      *
      * @param event event
      */
     public void update(@NotNull AnActionEvent event) {
         super.update(event);
 
+        // Presentation对象包含了与用户界面相关的信息，如操作的名称、描述、图标和 启用/禁用开关。
         Presentation presentation = event.getPresentation();
 
+        //Program Structure Interface  PSI 会将代码解析成一个树状结构，其中包含了类、方法、语句等节点。
         @Nullable PsiElement psiElement = event.getData(CommonDataKeys.PSI_FILE);
         presentation.setEnabled(isEnabled(psiElement));
 
@@ -50,7 +52,11 @@ public class ShowSequenceAction extends AnAction implements DumbAware {
 
         SequenceService plugin = project.getService(SequenceService.class);
 
+        //一个 PsiFile 表示整个文件，而文件中的所有代码元素（如类、方法、字段等）都是 PsiElement。可以通过 PsiFile 访问和操作这些代码元素。
+        // 可以是代码中的任何元素，如类、方法、变量等。
         PsiElement psiElement = event.getData(CommonDataKeys.PSI_ELEMENT);
+
+        // 当前编辑的文件。
         final PsiFile psiFile = event.getData(CommonDataKeys.PSI_FILE);
 
         if (psiElement == null) {
@@ -75,10 +81,11 @@ public class ShowSequenceAction extends AnAction implements DumbAware {
                 }
             }
         }
-
+        // 如果找到具体的方法，直接生成时序图
         if (psiElement != null) {
             plugin.showSequence(psiElement);
         } else {
+            // 如果没有找到具体的方法，选择当前文件中的某个方法生成时序图
             if (psiFile != null) {
                 chooseMethodToGenerate(event, plugin, psiFile, project);
             }
@@ -106,7 +113,7 @@ public class ShowSequenceAction extends AnAction implements DumbAware {
 //                return actionFinder.find(project, psiElement, task);
 //            }
 //        });
-
+        // 异步读取，避免阻塞 UI 线程
         ReadAction.nonBlocking(() -> {
             ActionFinder actionFinder = ActionFinder.getInstance(psiElement.getLanguage());
             if (actionFinder == null) {
@@ -127,6 +134,7 @@ public class ShowSequenceAction extends AnAction implements DumbAware {
         }).submit(NonUrgentExecutor.getInstance());
     }
 
+//    面向 IntelliJ Platform 2022.3 或更高版本时，必须实现AnAction.getActionUpdateThread()
 //    @Override
 //    public @NotNull ActionUpdateThread getActionUpdateThread() {
 //        return ActionUpdateThread.BGT;
