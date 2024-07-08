@@ -98,7 +98,7 @@ public class ShowSequenceAction extends AnAction implements DumbAware {
 //        AnAction[] list;
 
         /*
-          For each PsiElement (PsiMethod/KtFunction) found, invoke {@code SequenceService.showSequence(psiElement)}
+          对于找到的每个PsiElement（PsiMethod/KtFunction），调用｛@code SequenceService.showSequence（PsiElement）｝
          */
         ActionFinder.Task task = (method, myProject) -> plugin.showSequence(method);
 
@@ -113,7 +113,11 @@ public class ShowSequenceAction extends AnAction implements DumbAware {
 //                return actionFinder.find(project, psiElement, task);
 //            }
 //        });
-        // 异步读取，避免阻塞 UI 线程
+
+        /**
+         * 异步读取当前文件中的所有方法，避免阻塞 UI 线程
+         * todo: 如果我找到了三个方法，然后点击第一个方法，如何根据我的点击操作，去展示对应方法的时序图呢  打断点
+         */
         ReadAction.nonBlocking(() -> {
             ActionFinder actionFinder = ActionFinder.getInstance(psiElement.getLanguage());
             if (actionFinder == null) {
