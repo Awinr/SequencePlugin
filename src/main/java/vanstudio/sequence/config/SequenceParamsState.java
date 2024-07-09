@@ -12,6 +12,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+
+/**
+ * 插件左侧的小扳手中的设置
+ */
 @State(name = "sequenceParams", storages = {@Storage("sequencePlugin.xml")})
 public class SequenceParamsState implements PersistentStateComponent<SequenceParamsState> {
     public int callDepth = 5;
@@ -19,6 +23,7 @@ public class SequenceParamsState implements PersistentStateComponent<SequencePar
     public boolean noGetterSetters = true;
     public boolean noPrivateMethods = false;
     public boolean noConstructors = false;
+
     @Deprecated(since = "2.2.0", forRemoval = true)
     public boolean smartInterface = false;
 

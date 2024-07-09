@@ -6,7 +6,7 @@ import vanstudio.sequence.openapi.model.CallStack;
 import vanstudio.sequence.openapi.model.MethodDescription;
 
 /**
- * Generate Mermaid Sequence Diagram format.
+ * 生成 Mermaid 序列图格式。
  *
  * <a href="https://mermaid-js.github.io/mermaid/">Mermaid</a>
  */

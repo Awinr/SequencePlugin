@@ -35,6 +35,7 @@ The original version SequencePlugin come from ksibilev@yahoo.com.</p>
     <change-notes/>
 
     <actions>
+        <!-- 动作定义 -->
         <action id="SequencePlugin.ShowSequenceDiagram" class="vanstudio.sequence.ShowSequenceAction"
                 icon="SequencePluginIcons.SEQUENCE_ICON"
                 text="Sequence Diagram"
@@ -47,7 +48,9 @@ The original version SequencePlugin come from ksibilev@yahoo.com.</p>
 
     </actions>
 
+    <!-- 定义 4 个自定义扩展点 -->
     <extensionPoints>
+        <!-- beanClass: 扩展点的类型 -->
         <extensionPoint name="sequenceNavigable" beanClass="com.intellij.lang.LanguageExtensionPoint"
                         area="IDEA_PROJECT" dynamic="true">
             <with attribute="implementationClass" implements="vanstudio.sequence.openapi.SequenceNavigable"/>
@@ -64,23 +67,32 @@ The original version SequencePlugin come from ksibilev@yahoo.com.</p>
     </extensionPoints>
 
     <extensions defaultExtensionNs="com.intellij">
-        <!-- Add your extensions here -->
+        <!-- 应用级别的配置 显示在Settings/Tools/Sequence Diagram 适用于整个 IntelliJ IDEA 应用程序，贯穿于所有打开的项目-->
         <applicationConfigurable parentId="tools"
                                  id="Settings.Sequence.Configuration"
                                  instance="vanstudio.sequence.config.SequenceSettingsConfigurable"
                                  displayName="Sequence Diagram"/>
+        <!-- 应用级别的服务 Settings -->
         <applicationService serviceImplementation="vanstudio.sequence.config.SequenceSettingsState"/>
+
+        <!-- 插件左侧的小扳手中的设置 -->
         <applicationService serviceImplementation="vanstudio.sequence.config.SequenceParamsState"/>
+
+        <!-- 底层工具栏 -->
         <toolWindow id="Sequence Diagram" icon="SequencePluginIcons.SEQUENCE_ICON_13" anchor="bottom"
                     factoryClass="vanstudio.sequence.SequenceToolWindowsFactory" canCloseContents="true"/>
-        <!-- Since idea 2020.3.x -->
+
+        <!-- Since idea 2020.3.x 在IDE中显示与序列图插件相关的通知 -->
         <notificationGroup displayType="BALLOON" id="Sequence Diagram"/>
 
+        <!-- 生命周期随项目一致 -->
         <projectService serviceInterface="vanstudio.sequence.SequenceService"
                         serviceImplementation="vanstudio.sequence.impl.SequenceServiceImpl"/>
-
-
     </extensions>
+
+
+
+    <!-- 实现扩展点  name space:  SequenceDiagram -->
     <extensions defaultExtensionNs="SequenceDiagram">
         <sequenceNavigable language="JAVA"
                            implementationClass="vanstudio.sequence.generator.JavaSequenceNavigable"/>

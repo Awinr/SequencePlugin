@@ -11,8 +11,7 @@ import vanstudio.sequence.SequencePanel;
 import vanstudio.sequence.SequenceService;
 
 /**
- * &copy; fanhuagang@gmail.com
- * Created by van on 2020/2/23.
+ * 时序服务
  */
 public class SequenceServiceImpl implements SequenceService {
 
@@ -25,12 +24,16 @@ public class SequenceServiceImpl implements SequenceService {
 
     }
 
+    /**
+     * 显示某个 PsiElement 的时序图
+     * @param psiElement
+     */
     @Override
     public void showSequence(@NotNull PsiElement psiElement) {
-
+        // 创建时序图面板
         final SequencePanel sequencePanel = new SequencePanel(_project, psiElement);
         final Content content = addSequencePanel(sequencePanel);
-        // register callback when generate finished, update the content title.
+        //生成中title为：Generate...  生成完成后注册回调，更新内容标题。
         sequencePanel.withFinishedListener(content::setDisplayName);
 
         Runnable postAction = sequencePanel::generate;
@@ -44,6 +47,7 @@ public class SequenceServiceImpl implements SequenceService {
         ContentManager contentManager = _toolWindow.getContentManager();
         final Content content = contentManager.getFactory().createContent(sequencePanel, sequencePanel.getTitleName(), false);
         contentManager.addContent(content);
+        // 将刚刚添加的 Content 对象设置为当前选中的内容，使其在工具窗口中显示为激活状态。即展示当前内容
         contentManager.setSelectedContent(content);
         return content;
     }

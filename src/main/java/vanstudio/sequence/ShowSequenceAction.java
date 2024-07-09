@@ -25,6 +25,7 @@ public class ShowSequenceAction extends AnAction implements DumbAware {
     }
 
     /**
+     * 动作启用/禁用状态
      *根据文件类型启用或禁用菜单。当前只有 java 文件才能启用菜单。
      *
      * @param event event
@@ -46,11 +47,15 @@ public class ShowSequenceAction extends AnAction implements DumbAware {
                 && ActionFinder.isValid(psiElement.getLanguage());
     }
 
+    /**
+     * 动作逻辑
+     * @param event
+     */
     public void actionPerformed(@NotNull AnActionEvent event) {
         Project project = event.getProject();
         if (project == null) return;
 
-        SequenceService plugin = project.getService(SequenceService.class);
+        SequenceService sequenceService = project.getService(SequenceService.class);
 
         //一个 PsiFile 表示整个文件，而文件中的所有代码元素（如类、方法、字段等）都是 PsiElement。可以通过 PsiFile 访问和操作这些代码元素。
         // 可以是代码中的任何元素，如类、方法、变量等。
@@ -74,7 +79,7 @@ public class ShowSequenceAction extends AnAction implements DumbAware {
                         Class<? extends PsiElement> aClass = typeFinder.findClass();
                         psiElement = PsiTreeUtil.findElementOfClassAtOffset(psiFile, caret.getOffset(), aClass, false);
                         if (psiElement != null) {
-                            chooseMethodToGenerate(event, plugin, psiElement, project);
+                            chooseMethodToGenerate(event, sequenceService, psiElement, project);
                             return;
                         }
                     }
@@ -83,16 +88,16 @@ public class ShowSequenceAction extends AnAction implements DumbAware {
         }
         // 如果找到具体的方法，直接生成时序图
         if (psiElement != null) {
-            plugin.showSequence(psiElement);
+            sequenceService.showSequence(psiElement);
         } else {
             // 如果没有找到具体的方法，选择当前文件中的某个方法生成时序图
             if (psiFile != null) {
-                chooseMethodToGenerate(event, plugin, psiFile, project);
+                chooseMethodToGenerate(event, sequenceService, psiFile, project);
             }
         }
     }
 
-    private void chooseMethodToGenerate(@NotNull AnActionEvent event, SequenceService plugin, PsiElement psiElement, @NotNull Project project) {
+    private void chooseMethodToGenerate(@NotNull AnActionEvent event, SequenceService sequenceService, PsiElement psiElement, @NotNull Project project) {
 
         // for PsiClass, show popup menu list method to choose
 //        AnAction[] list;
@@ -100,7 +105,7 @@ public class ShowSequenceAction extends AnAction implements DumbAware {
         /*
           对于找到的每个PsiElement（PsiMethod/KtFunction），调用｛@code SequenceService.showSequence（PsiElement）｝
          */
-        ActionFinder.Task task = (method, myProject) -> plugin.showSequence(method);
+        ActionFinder.Task task = (method, myProject) -> sequenceService.showSequence(method);
 
         /*
           Get {@code ActionMenuFinder} by PsiFile's Language and find all PsiMethod/KtFunction with gaven task.

@@ -16,26 +16,64 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
+/**
+ * Settings中的选项
+ */
 @State(name = "sequencePlugin", storages = {@Storage("sequencePlugin.xml")})
 public class SequenceSettingsState implements PersistentStateComponent<SequenceSettingsState> {
+
     @OptionTag(converter = ColorConverter.class)
     public Color CLASS_COLOR = new JBColor(new Color(0xFFFFC0), new Color(0xFFFFC0));
+
     @OptionTag(converter = ColorConverter.class)
     public Color EXTERNAL_CLASS_COLOR = new JBColor(new Color(0xFFD1CE), new Color(0xFFD1CE));
+
     @OptionTag(converter = ColorConverter.class)
     public Color METHOD_BAR_COLOR = new JBColor(new Color(0xFFE0A7), new Color(0xFFE0A7));
+
     @OptionTag(converter = ColorConverter.class)
     public Color SELECTED_METHOD_BAR_COLOR = new JBColor(new Color(0x85C1FF), new Color(0x85C1FF));
+
     @OptionTag(converter = ColorConverter.class)
     public Color INTERFACE_COLOR = new JBColor(new Color(0xCCFACF), new Color(0xCCFACF));
+
+    /**
+     * 使用 3D 视图
+     */
     public boolean USE_3D_VIEW = false;
+
+    /**
+     * 使用抗锯齿
+     */
     public boolean USE_ANTIALIASING = true;
+
+    /**
+     * 显示返回箭头
+     */
     public boolean SHOW_RETURN_ARROWS = true;
+
+    /**
+     * 显示调用顺序
+     */
     public boolean SHOW_CALL_NUMBERS = true;
+
+    /**
+     * 简化调用名
+     */
     public boolean SHOW_SIMPLIFY_CALL_NAME = true;
+
+    /**
+     * 显示 lambda 调用
+     */
     public boolean SHOW_LAMBDA_CALL = true;
+
+    /**
+     * 智能界面
+     */
     public boolean SMART_INTERFACE = true;
+
     public String FONT_NAME = "Dialog";
+
     public int FONT_SIZE = 11;
 
     @Transient

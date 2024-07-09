@@ -43,17 +43,58 @@ import java.util.Objects;
 
 import static vanstudio.sequence.util.MyPsiUtil.getFileChooser;
 
+/**
+ * 展示和操作序列图的面板
+ */
 public class SequencePanel extends JPanel implements ConfigListener {
+
     private static final Logger LOGGER = Logger.getInstance(SequencePanel.class);
+
     private final Project project;
+
+    /**
+     * 展示序列图的组件
+     */
     private final Display _display;
+
+    /**
+     * 序列图的数据模型
+     */
     private final Model _model;
+
+    /**
+     * 用于导航到源代码的接口
+     */
     private final SequenceNavigable navigable;
+
+    /**
+     * 序列图的参数配置
+     */
     private final SequenceParams _sequenceParams;
+
+    /**
+     * 表示当前处理的 PSI 元素 (方法)
+     */
     private PsiElement psiElement;
+
+    /**
+     * 序列图的标题名称
+     */
     private String _titleName;
+
+    /**
+     * 用于显示序列图的滚动面板
+     */
     private final JScrollPane _jScrollPane;
+
+    /**
+     * 存储导航索引的映射
+     */
     private final HashMap<String, Integer> navIndexMap = new HashMap<>();
+
+    /**
+     * 用于处理生成完成事件的监听器
+     */
     private GenerateFinishedListener finished = name -> {};
 
     public SequencePanel(Project project, PsiElement psiMethod) {
@@ -69,6 +110,9 @@ public class SequencePanel extends JPanel implements ConfigListener {
         _model = new Model();
         _display = new Display(_model, new SequenceListenerImpl());
 
+        /**
+         * 面板左侧的 6 个动作 两两一组
+         */
         DefaultActionGroup actionGroup = new DefaultActionGroup("SequencerActionGroup", false);
         actionGroup.add(new ReGenerateAction());
         actionGroup.add(new SequenceParamsEditor());
@@ -79,10 +123,12 @@ public class SequencePanel extends JPanel implements ConfigListener {
         actionGroup.add(new ExportAction());
         actionGroup.add(new ExportPumlAction());
 
-        ActionManager actionManager = ActionManager.getInstance();
-        ActionToolbar actionToolbar = actionManager.createActionToolbar("SequencerToolbar", actionGroup, false);
-        add(actionToolbar.getComponent(), BorderLayout.WEST);
+        // 创建一个名为 "SequencerToolbar" 的工具栏，工具栏中包含了 actionGroup 中定义的动作。false 表示不显示工具栏的浮动状态。
+        ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("SequencerToolbar", actionGroup, false);
+        // 设置工具栏的目标组件为当前面板
         actionToolbar.setTargetComponent(this);
+        // 工具栏组件添加到面板的西边（左侧）
+        add(actionToolbar.getComponent(), BorderLayout.WEST);
 
         MyButton birdViewButton = new MyButton(AllIcons.General.InspectionsEye);
         birdViewButton.setToolTipText("Bird view");
@@ -102,23 +148,35 @@ public class SequencePanel extends JPanel implements ConfigListener {
         return _model;
     }
 
+    // 先执行finished lambda表达式，执行完再赋值 this.finished
     public SequencePanel withFinishedListener(GenerateFinishedListener finished) {
         this.finished = finished;
         return this;
     }
 
+    /**
+     * 将当前 SequencePanel 实例作为配置变更的监听器。
+     * 这样，当 SequenceParamsState 中的配置发生变化时，SequencePanel 将会接收到通知。以便更新自身或做出相应的调整
+     */
     @Override
     public void addNotify() {
         super.addNotify();
         SequenceParamsState.getInstance().addConfigListener(this);
     }
 
+    /**
+     * 当某个 SequencePanel 组件从 UI 上移除时，应该停止监听配置的变化
+     */
     @Override
     public void removeNotify() {
         SequenceParamsState.getInstance().removeConfigListener(this);
         super.removeNotify();
     }
 
+    /**
+     * 接收一个表示时序图的字符串，将其设置到模型中，然后刷新显示以展示新的序列图。
+     * @param query 表示时序图的字符串
+     */
     private void generate(String query) {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("sequence = " + query);
@@ -135,18 +193,17 @@ public class SequencePanel extends JPanel implements ConfigListener {
 
         IGenerator generator = GeneratorFactory.createGenerator(psiElement.getLanguage(), _sequenceParams);
 
-        final BackgroundableProcessIndicator progressIndicator =
-                new BackgroundableProcessIndicator(
+        // 用于在后台执行生成操作时显示进度。
+        final BackgroundableProcessIndicator progressIndicator = new BackgroundableProcessIndicator(
                         project,
-                        "Generate sequence...",
-                        PerformInBackgroundOption.ALWAYS_BACKGROUND, // todo: remove this deprecated parameter 
+                        "Generating sequence...",
+                        PerformInBackgroundOption.ALWAYS_BACKGROUND,
                         "Stop",
                         "Stop",
                         false);
-        ReadAction
-                .nonBlocking(() -> {
+        ReadAction.nonBlocking(() -> {
                     final CallStack callStack = generator.generate(psiElement, null);
-                    if ( callStack == null || callStack.getMethod() == null) {
+                    if (callStack == null || callStack.getMethod() == null) {
                         progressIndicator.processFinish();
                         return "Generate...";
                     }
@@ -553,8 +610,7 @@ public class SequencePanel extends JPanel implements ConfigListener {
                 DisplayObject displayObject = (DisplayObject) screenObject;
                 actionGroup.add(new RemoveClassAction(displayObject.getObjectInfo()));
                 if ((displayObject.getObjectInfo().hasAttribute(Info.INTERFACE_ATTRIBUTE) || displayObject.getObjectInfo().hasAttribute(Info.ABSTRACT_ATTRIBUTE))
-                        && !displayObject.getObjectInfo().hasAttribute(Info.EXTERNAL_ATTRIBUTE)
-                        /*&& !_sequenceParams.isSmartInterface()*/) {
+                        && !displayObject.getObjectInfo().hasAttribute(Info.EXTERNAL_ATTRIBUTE)) {
                     String className = displayObject.getObjectInfo().getFullName();
                     List<String> impls = navigable.findImplementations(className);
                     actionGroup.addSeparator();
@@ -565,7 +621,7 @@ public class SequencePanel extends JPanel implements ConfigListener {
                 actionGroup.add(new RemoveMethodAction(displayMethod.getMethodInfo()));
                 if ((displayMethod.getObjectInfo().hasAttribute(Info.INTERFACE_ATTRIBUTE) || displayMethod.getObjectInfo().hasAttribute(Info.ABSTRACT_ATTRIBUTE))
                         && !displayMethod.getObjectInfo().hasAttribute(Info.EXTERNAL_ATTRIBUTE)
-                        /*&& !_sequenceParams.isSmartInterface()*/) {
+                    /*&& !_sequenceParams.isSmartInterface()*/) {
 
                     String className = displayMethod.getObjectInfo().getFullName();
                     String methodName = displayMethod.getMethodInfo().getRealName();
