@@ -98,6 +98,10 @@ tasks {
     withType(JavaCompile::class.java) {
         options.encoding = "UTF-8"
     }
+
+    test {
+        systemProperty("idea.force.use.core.classloader", "true")
+    }
 }
 
 dependencies {

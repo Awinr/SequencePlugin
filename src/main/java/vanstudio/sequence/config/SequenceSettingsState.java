@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Vector;
 
 /**
- * Settings中的选项
+ * 全局Settings中的选项
  */
 @State(name = "sequencePlugin", storages = {@Storage("sequencePlugin.xml")})
 public class SequenceSettingsState implements PersistentStateComponent<SequenceSettingsState> {

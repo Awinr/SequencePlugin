@@ -8,6 +8,10 @@ import javax.swing.event.SwingPropertyChangeSupport;
 import java.beans.PropertyChangeListener;
 import java.io.*;
 
+/**
+ * 事件源
+ * 该类可以触发事件并允许添加和移除事件监听器。
+ */
 public class Model {
 
     private static final Logger LOGGER = Logger.getInstance(Model.class);
@@ -121,12 +125,16 @@ public class Model {
         _listenerList.remove(ModelTextListener.class, l);
     }
 
-    private synchronized void fireModelTextEvent(String s, Object setter) {
-        ModelTextEvent mte = new ModelTextEvent(setter, s);
+    /**
+     * 触发事件 每当用户对组件进行操作（如点击、输入、移动鼠标等）时，事件源会生成相应的事件对象，并通知注册的事件监听器
+     */
+    private synchronized void fireModelTextEvent(String text, Object source) {
+        ModelTextEvent event = new ModelTextEvent(source, text);
+        // 监听器数组是以 (listenerType, listenerInstance) 的方式成对存储的。
         Object[] listeners = _listenerList.getListenerList();
         for (int i = listeners.length - 2; i >= 0; i -= 2) {
             if (listeners[i] == ModelTextListener.class)
-                ((ModelTextListener) listeners[i + 1]).modelTextChanged(mte);
+                ((ModelTextListener) listeners[i + 1]).modelTextChanged(event);
         }
     }
 

@@ -68,7 +68,7 @@ public class Display extends JComponent implements ModelTextListener, Scrollable
     public void modelTextChanged(ModelTextEvent event) {
         setQuery(event.getText());
     }
-
+    // todo query已经有了，该怎么查询呢
     private void setQuery(String query) {
         _diagram.build(query);
         _initialized = false;

@@ -130,10 +130,12 @@ public class SequencePanel extends JPanel implements ConfigListener {
         // 工具栏组件添加到面板的西边（左侧）
         add(actionToolbar.getComponent(), BorderLayout.WEST);
 
+        // 鸟瞰全局
         MyButton birdViewButton = new MyButton(AllIcons.General.InspectionsEye);
         birdViewButton.setToolTipText("Bird view");
         birdViewButton.addActionListener(e -> showBirdView());
 
+        // 垂直方向/水平方向可滚动
         _jScrollPane = new JBScrollPane(_display);
         _jScrollPane.setVerticalScrollBar(new MyScrollBar(Adjustable.VERTICAL));
         _jScrollPane.setHorizontalScrollBar(new MyScrollBar(Adjustable.HORIZONTAL));

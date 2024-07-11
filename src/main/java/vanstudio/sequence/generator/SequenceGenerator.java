@@ -29,8 +29,8 @@ public class SequenceGenerator extends JavaRecursiveElementVisitor implements IG
     private final Stack<Integer> offsetStack = new Stack<>();
 
     private final ArrayList<String> imfCache = new ArrayList<>();
-    private CallStack topStack;
-    private CallStack currentStack;
+    private CallStack topStackElement;
+    private CallStack currentStackElement;
     private final SequenceParams params;
 
     private final boolean SHOW_LAMBDA_CALL;
@@ -48,8 +48,8 @@ public class SequenceGenerator extends JavaRecursiveElementVisitor implements IG
     @Override
     public CallStack generate(PsiElement psiElement, CallStack parent) {
         if (parent != null) {
-            topStack = parent;
-            currentStack = topStack;
+            topStackElement = parent;
+            currentStackElement = topStackElement;
         }
 
         if (psiElement instanceof PsiMethod)
@@ -60,7 +60,7 @@ public class SequenceGenerator extends JavaRecursiveElementVisitor implements IG
             LOGGER.warn("unsupported " + psiElement.getText());
         }
 
-        return topStack;
+        return topStackElement;
     }
 
     /**
@@ -71,9 +71,9 @@ public class SequenceGenerator extends JavaRecursiveElementVisitor implements IG
      */
     private CallStack generate(PsiLambdaExpression expression) {
         MethodDescription method = createMethod(expression);
-        makeMethodCallExceptCurrentStackIsRecursive(method);
+        makeMethodCallExceptcurrentStackElementIsRecursive(method);
         super.visitLambdaExpression(expression);
-        return topStack;
+        return topStackElement;
     }
 
     private CallStack generate(PsiMethod psiMethod) {
@@ -82,7 +82,7 @@ public class SequenceGenerator extends JavaRecursiveElementVisitor implements IG
         } else if (psiMethod.getLanguage().equals(KotlinLanguage.INSTANCE)) {
             return generateKotlin(psiMethod);
         } else {
-            return topStack;
+            return topStackElement;
         }
     }
 
@@ -98,12 +98,12 @@ public class SequenceGenerator extends JavaRecursiveElementVisitor implements IG
                 offsetStack.isEmpty()
                         ? GeneratorFactory.createGenerator(psiMethod.getLanguage(), params)
                         : GeneratorFactory.createGenerator(psiMethod.getLanguage(), params, offsetStack.pop());
-        CallStack kotlinCall = ktSequenceGenerator.generate(psiMethod.getNavigationElement(), currentStack);
-        if (topStack == null) {
-            topStack = kotlinCall;
-            currentStack = topStack;
+        CallStack kotlinCall = ktSequenceGenerator.generate(psiMethod.getNavigationElement(), currentStackElement);
+        if (topStackElement == null) {
+            topStackElement = kotlinCall;
+            currentStackElement = topStackElement;
         }
-        return topStack;
+        return topStackElement;
     }
 
     /**
@@ -118,7 +118,7 @@ public class SequenceGenerator extends JavaRecursiveElementVisitor implements IG
         }
 
         if (containingClass == null) {
-            return topStack;
+            return topStackElement;
         }
 
         if (MyPsiUtil.isAbstract(containingClass)) {
@@ -145,7 +145,7 @@ public class SequenceGenerator extends JavaRecursiveElementVisitor implements IG
 
             psiMethod.accept(this);
         }
-        return topStack;
+        return topStackElement;
     }
 
     private boolean alreadyInStack(PsiMethod psiMethod) {
@@ -153,7 +153,7 @@ public class SequenceGenerator extends JavaRecursiveElementVisitor implements IG
         if (psiMethod.getContainingClass() == null || MyPsiUtil.isExternal(psiMethod.getContainingClass())) return true;
         final int offset = psiMethod.getTextOffset();
         MethodDescription method = createMethod(psiMethod, offset);
-        return currentStack.isRecursive(method);
+        return currentStackElement.isRecursive(method);
     }
 
     private void methodAccept(PsiElement psiElement) {
@@ -173,7 +173,7 @@ public class SequenceGenerator extends JavaRecursiveElementVisitor implements IG
     public void visitMethod(PsiMethod psiMethod) {
         int offset = offsetStack.isEmpty() ? psiMethod.getTextOffset() : offsetStack.pop();
         MethodDescription method = createMethod(psiMethod, offset);
-        if (makeMethodCallExceptCurrentStackIsRecursive(method)) return;
+        if (makeMethodCallExceptcurrentStackElementIsRecursive(method)) return;
         super.visitMethod(psiMethod);
     }
 
@@ -232,15 +232,15 @@ public class SequenceGenerator extends JavaRecursiveElementVisitor implements IG
         if (psiMethod == null) return;
         if (!params.getMethodFilter().allow(psiMethod)) return;
 
-        if (currentStack.level() < params.getMaxDepth()) {
-            CallStack oldStack = currentStack;
-            LOGGER.debug("+ depth = " + currentStack.level() + " method = " + psiMethod.getName());
+        if (currentStackElement.level() < params.getMaxDepth()) {
+            CallStack oldStack = currentStackElement;
+            LOGGER.debug("+ depth = " + currentStackElement.level() + " method = " + psiMethod.getName());
             offsetStack.push(offset);
             generate(psiMethod);
-            LOGGER.debug("- depth = " + currentStack.level() + " method = " + psiMethod.getName());
-            currentStack = oldStack;
+            LOGGER.debug("- depth = " + currentStackElement.level() + " method = " + psiMethod.getName());
+            currentStackElement = oldStack;
         } else
-            currentStack.methodCall(createMethod(psiMethod, offset));
+            currentStackElement.methodCall(createMethod(psiMethod, offset));
     }
 
     private MethodDescription createMethod(PsiMethod psiMethod, int offset) {
@@ -420,20 +420,20 @@ public class SequenceGenerator extends JavaRecursiveElementVisitor implements IG
         if (SHOW_LAMBDA_CALL) {
             GeneratorFactory
                     .createGenerator(expression.getLanguage(), params)
-                    .generate(expression, currentStack);
+                    .generate(expression, currentStackElement);
         } else {
             super.visitLambdaExpression(expression);
         }
     }
 
-    private boolean makeMethodCallExceptCurrentStackIsRecursive(MethodDescription method) {
-        if (topStack == null) {
-            topStack = new CallStack(method);
-            currentStack = topStack;
+    private boolean makeMethodCallExceptcurrentStackElementIsRecursive(MethodDescription method) {
+        if (topStackElement == null) {
+            topStackElement = new CallStack(method);
+            currentStackElement = topStackElement;
         } else {
-            if (params.isNotAllowRecursion() && currentStack.isRecursive(method))
+            if (params.isNotAllowRecursion() && currentStackElement.isRecursive(method))
                 return true;
-            currentStack = currentStack.methodCall(method);
+            currentStackElement = currentStackElement.methodCall(method);
         }
         return false;
     }
