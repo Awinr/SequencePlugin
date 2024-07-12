@@ -12,7 +12,6 @@ public class SaveAction extends ModifiedEnabledAction {
         if(getModel().getFile() != null) {
             return getModel().writeToFile(getModel().getFile());
         } else {
-            // todo
             return false; //getModel().getSaveAsAction().doIt();
         }
     }

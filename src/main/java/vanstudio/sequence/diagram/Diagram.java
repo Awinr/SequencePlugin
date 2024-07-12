@@ -9,37 +9,44 @@ import java.util.Collections;
 import java.util.List;
 
 public class Diagram {
+
     private static final Logger LOGGER = Logger.getInstance(Diagram.class);
 
     private final List<DisplayObject> _objectLifeLines = Collections.synchronizedList(new ArrayList<>());
+    // 存放用于展示的 DisplayLink
     private final List<DisplayLink> _links = Collections.synchronizedList(new ArrayList<>());
 
     public Diagram() {
     }
 
+    /**
+     * 通过解析 queryString 来生成显示对象和链接
+     * @param queryString
+     */
     public void build(String queryString) {
         _objectLifeLines.clear();
         _links.clear();
 
-        Parser p = new Parser();
+        Parser parser = new Parser();
         try {
-            p.parse(queryString);
+            // 解析需要的Class对象以及方法的调用信息
+            parser.parse(queryString);
         } catch (IOException ioe) {
             LOGGER.error("IOException", ioe);
             return;
         }
 
-        List<ObjectInfo> theObjects = p.getObjects();
+        List<ObjectInfo> theObjects = parser.getObjects();
         for (ObjectInfo objectInfo : theObjects) {
-            _objectLifeLines.add(new DisplayObject(objectInfo));
+            _objectLifeLines.add(new DisplayObject(objectInfo));// 把最顶层的对象包装成屏幕元素
         }
-
-        List<Link> theDisplayLinks = p.getLinks();
+        // link 就是一条条调用信息和对应的返回信息，可以简单理解为一个个实线箭头和虚线箭头（其实没有线）
+        List<Link> theDisplayLinks = parser.getLinks();
         int seq = 0;
         synchronized (_objectLifeLines) {
             for (Link link : theDisplayLinks) {
-                int fromSeq = link.getFrom().getSeq();
-                int toSeq = link.getTo().getSeq();
+                int fromSeq = link.getFrom().getSeq();// fromSeq -> fromObjectSeq
+                int toSeq = link.getTo().getSeq();// toSeq -> toObjectSeq
                 DisplayObject fromObj = _objectLifeLines.get(fromSeq);
                 DisplayObject toObj = _objectLifeLines.get(toSeq);
                 DisplayLink displayLink = null;
@@ -67,9 +74,9 @@ public class Diagram {
             for (ObjectInfo info : theObjects) {
                 DisplayObject displayInfo = _objectLifeLines.get(info.getSeq());
                 for (MethodInfo methodInfo : info.getMethods()) {
-                    int startSeq = methodInfo.getStartSeq();
-                    int endSeq = methodInfo.getEndSeq();
-                    if ((startSeq < _links.size()) && (endSeq < _links.size())) {
+                    int startSeq = methodInfo.getStartSeq(); // 这里的 startSeq 指的是垂直方向方法开始的seq
+                    int endSeq = methodInfo.getEndSeq();// 这里的 endSeq 指的是垂直方向方法返回的seq
+                    if ((startSeq < _links.size()) && (endSeq < _links.size())) {// DisplayMethod 包含了callLink & returnLink，即来回两条箭头
                         DisplayMethod methodBox = new DisplayMethod(info, methodInfo,
                                 _links.get(startSeq), _links.get(endSeq));
                         displayInfo.addMethod(methodBox);

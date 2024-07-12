@@ -17,11 +17,30 @@ public class Parser {
 
     private static final Logger LOGGER = Logger.getInstance(Parser.class);
 
+    /**
+     * 存储类中所调用的方法
+     */
     private final CallInfoStack _callInfoStack = new CallInfoStack();
+
+    /**
+     * 包含 调用链 & 返回链，即实箭头 & 虚箭头
+     */
     private final List<Link> _linkList = new ArrayList<>();
-    private final List<ObjectInfo> _objList = new ArrayList<>();
-    private int _currentHorizontalSeq = 0;
-    private int _currentVerticalSeq = 0;
+
+    /**
+     * 最顶层的对象信息, 如 Actor Main ArrayList
+     */
+    private final List<ObjectInfo> _objInfoList = new ArrayList<>();
+
+    /**
+     * 当前最顶层的对象的水平顺序
+     */
+    private int _currentClassHorizontalSeq = 0;
+
+    /**
+     * 当前方法调用的垂直顺序
+     */
+    private int _curMethodCallVerticalSeq = 0;
 
     public Parser() {
     }
@@ -44,7 +63,7 @@ public class Parser {
                 case ")":
                     addReturn();
                     break;
-                default:
+                default: // 遇到描述方法的 json字符串
                     try {
                         addCall(line);
                     } catch (Throwable e) {
@@ -78,53 +97,66 @@ public class Parser {
     }
 
     public List<ObjectInfo> getObjects() {
-        return _objList;
+        return _objInfoList;
     }
 
+    /**
+     * 整理归类调用信息
+     * @param calledMethod JSON字符串
+     */
     private void addCall(String calledMethod) {
         Gson gson = new Gson();
-        MethodDescription m = gson.fromJson(calledMethod, MethodDescription.class);
-        boolean isLambda = Objects.equals(m.getMethodName(), Constants.Lambda_Invoke);
+        MethodDescription methodDescription = gson.fromJson(calledMethod, MethodDescription.class);
+        boolean isLambda = Objects.equals(methodDescription.getMethodName(), Constants.Lambda_Invoke);
 
         if (isLambda) {
-            m = gson.fromJson(calledMethod, LambdaExprDescription.class);
+            methodDescription = gson.fromJson(calledMethod, LambdaExprDescription.class);
         }
+        // methodDescription: "|public|static|@main[args=java.Lang.String[]]:void"     classDescription: "|public|@Main"
+        ClassDescription classDescription = methodDescription.getClassDescription();
 
-        ClassDescription c = m.getClassDescription();
-        if (_objList.isEmpty()) {
-            ObjectInfo objectInfo = new ObjectInfo(ObjectInfo.ACTOR_NAME, new ArrayList<>(), _currentHorizontalSeq);
-            ++_currentHorizontalSeq;
-            _objList.add(objectInfo);
-            _callInfoStack.push(new CallInfo(objectInfo, "aMethod", _currentVerticalSeq));
+        // 列表为空，连Actor都没有 存入Actor
+        if (_objInfoList.isEmpty()) {
+            ObjectInfo objectInfo = new ObjectInfo(ObjectInfo.ACTOR_NAME, new ArrayList<>(), _currentClassHorizontalSeq);// Actor是水平方向上第0个Object
+            ++_currentClassHorizontalSeq;
+            _objInfoList.add(objectInfo);
+            CallInfo callInfo = new CallInfo(objectInfo, "ActorMethod", _curMethodCallVerticalSeq); // Actor类中的方法是垂直方向上第0个方法
+            _callInfoStack.push(callInfo);
         }
-        ObjectInfo objectInfo = new ObjectInfo(c.getClassName(), c.getAttributes(), _currentHorizontalSeq);
-        int i = _objList.indexOf(objectInfo);
+        
+        // 非 Actor类 添加到 _objInfoList
+        ObjectInfo objectInfo = new ObjectInfo(classDescription.getClassName(), classDescription.getAttributes(), _currentClassHorizontalSeq);
+        int i = _objInfoList.indexOf(objectInfo);
+        // objInfoList没有该objInfo，添加进去，比如 ArrayList 出现多次，没必要创建多个重复的 ArrayList
         if (i == -1) {
-            ++_currentHorizontalSeq;
-            _objList.add(objectInfo);
+            ++_currentClassHorizontalSeq;
+            _objInfoList.add(objectInfo);
         } else {
-            objectInfo = _objList.get(i);
+            objectInfo = _objInfoList.get(i);
         }
 
-        CallInfo callInfo = isLambda ? new LambdaInfo(objectInfo, m, _currentVerticalSeq)
-                : new CallInfo(objectInfo, m, _currentVerticalSeq);
+        // 被调用者
+        CallInfo calledInfo = isLambda ? new LambdaInfo(objectInfo, methodDescription, _curMethodCallVerticalSeq)
+                : new CallInfo(objectInfo, methodDescription, _curMethodCallVerticalSeq);
 
-        MethodInfo methodInfo = createMethodInfo(isLambda, callInfo);
+        MethodInfo methodInfo = createMethodInfo(isLambda, calledInfo);
 
         if (LOGGER.isDebugEnabled())
-            LOGGER.debug("addCall(...) calling " + callInfo + " seq is " + _currentVerticalSeq);
+            LOGGER.debug("addCall(...) calling " + calledInfo + " seq is " + _curMethodCallVerticalSeq);
 
-        if (!_callInfoStack.isEmpty()) {
-            CallInfo currentInfo = _callInfoStack.peek();
-            //currentInfo.getCall().setMethodInfo(methodInfo);
-            callInfo.setNumbering();
-            Call call = currentInfo.createCall(callInfo);
+        if (!_callInfoStack.isEmpty()) { // lastCallInfo currentCallInfo 变量名更新
+            // 弹栈，弹出调用者
+            CallInfo callerInfo = _callInfoStack.peek();
+            calledInfo.setNumbering(); // 设置调用方法的 x.x: ?
+
+            // 创建从调用者到被调用者的调用链，如 Actor -> Main、 Main -> ArrayList
+            Call call = callerInfo.createCall(calledInfo);
             call.setMethodInfo(methodInfo);
-            call.setVerticalSeq(_currentVerticalSeq++);
+            call.setVerticalSeq(_curMethodCallVerticalSeq++); // VerticalSeq表示垂直方向上的调用顺序，调用算一次，返回算一次
             _linkList.add(call);
         }
 
-        _callInfoStack.push(callInfo);
+        _callInfoStack.push(calledInfo);
     }
 
     @NotNull
@@ -135,7 +167,7 @@ public class Parser {
                         callInfo.getNumbering(), callInfo.getAttributes(),
                         callInfo.getMethod(), callInfo.getReturnType(),
                         callInfo.getArgNames(), callInfo.getArgTypes(),
-                        callInfo.getStartingVerticalSeq(), _currentVerticalSeq,
+                        callInfo.getStartingVerticalSeq(), _curMethodCallVerticalSeq,
                         ((LambdaInfo) callInfo).getEnclosedMethodName(),
                         ((LambdaInfo) callInfo).getEnclosedMethodArgTypes()
                 ) :
@@ -143,9 +175,12 @@ public class Parser {
                         callInfo.getNumbering(), callInfo.getAttributes(),
                         callInfo.getMethod(), callInfo.getReturnType(),
                         callInfo.getArgNames(), callInfo.getArgTypes(),
-                        callInfo.getStartingVerticalSeq(), _currentVerticalSeq);
+                        callInfo.getStartingVerticalSeq(), _curMethodCallVerticalSeq);
     }
 
+    /**
+     * 方法调用返回后，将该方法弹出，get方法还是由 main方法调用
+     */
     private void addReturn() {
         CallInfo callInfo = _callInfoStack.pop();
 
@@ -156,7 +191,7 @@ public class Parser {
         callInfo.getObj().addMethod(methodInfo);
 
         if (LOGGER.isDebugEnabled())
-            LOGGER.debug("addReturn(...) returning from " + callInfo + " seq is " + _currentVerticalSeq);
+            LOGGER.debug("addReturn(...) returning from " + callInfo + " seq is " + _curMethodCallVerticalSeq);
 
         if (!_callInfoStack.isEmpty()) {
             CallInfo currentInfo = _callInfoStack.peek();
@@ -164,7 +199,7 @@ public class Parser {
             CallReturn call = new CallReturn(callInfo.getObj(), currentInfo.getObj());
             call.setMethodInfo(methodInfo);
             _linkList.add(call);
-            call.setVerticalSeq(_currentVerticalSeq++);
+            call.setVerticalSeq(_curMethodCallVerticalSeq++);
         }
     }
 
@@ -196,7 +231,9 @@ public class Parser {
         return null;
     }
 
-    /* Private classes */
+    /**
+     * 从上到下将各个方法调用入栈
+     */
     private class CallInfoStack {
         private Stack<CallInfo> stack = new Stack<>();
         private CallInfo nPointerCallInfo;
@@ -233,7 +270,9 @@ public class Parser {
             return stack.isEmpty();
         }
     }
-
+    /**
+     * 类中的某个方法的调用信息 不包含 from、to
+     */
     private class CallInfo {
         private final ObjectInfo _obj;
         private final String _method;
@@ -312,7 +351,7 @@ public class Parser {
         int getStartingVerticalSeq() {
             return _startingSeq;
         }
-
+        @Override
         public String toString() {
             return "Calling " + _method + " on " + _obj;
         }

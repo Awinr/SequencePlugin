@@ -14,7 +14,7 @@ public class Info {
     public static final String STATIC_ATTRIBUTE = "static";
     public static final String FINAL_ATTRIBUTE = "final";
     public static final String STRICTFP_ATTRIBUTE = "strictfp";
-
+    // 已识别的方法属性
     public static final String[] RECOGNIZED_METHOD_ATTRIBUTES =
           {
               PRIVATE_ATTRIBUTE, PUBLIC_ATTRIBUTE, PROTECTED_ATTRIBUTE,

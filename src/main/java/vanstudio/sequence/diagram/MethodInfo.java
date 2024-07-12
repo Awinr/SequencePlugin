@@ -6,6 +6,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+/**
+ * 例：Method add on Object ArrayList seq 2 from 1 to 1
+ */
 public class MethodInfo extends Info {
 
     private final ObjectInfo _objectInfo;

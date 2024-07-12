@@ -10,7 +10,8 @@ import java.io.*;
 
 /**
  * 事件源
- * 该类可以触发事件并允许添加和移除事件监听器。
+ * 1. 生成事件对象：事件源在用户操作时生成事件对象，封装有关事件的信息。
+ * 2. 通知事件监听器：事件源会将生成的事件对象传递给所有注册的事件监听器，以便它们进行处理。
  */
 public class Model {
 
@@ -113,6 +114,19 @@ public class Model {
         fireModelTextEvent(s, setter);
     }
 
+    /**
+     * 生成事件 并通知事件监听器
+     */
+    private synchronized void fireModelTextEvent(String text, Object source) {
+        ModelTextEvent event = new ModelTextEvent(source, text);
+        // 监听器数组是以 (listenerType, listenerInstance) 的方式成对存储的。
+        Object[] listeners = _listenerList.getListenerList();
+        for (int i = listeners.length - 2; i >= 0; i -= 2) {
+            if (listeners[i] == ModelTextListener.class)
+                ((ModelTextListener) listeners[i + 1]).modelTextChanged(event);
+        }
+    }
+
     public File getFile() {
         return _file;
     }
@@ -123,19 +137,6 @@ public class Model {
 
     public void removeModelTextListener(ModelTextListener l) {
         _listenerList.remove(ModelTextListener.class, l);
-    }
-
-    /**
-     * 触发事件 每当用户对组件进行操作（如点击、输入、移动鼠标等）时，事件源会生成相应的事件对象，并通知注册的事件监听器
-     */
-    private synchronized void fireModelTextEvent(String text, Object source) {
-        ModelTextEvent event = new ModelTextEvent(source, text);
-        // 监听器数组是以 (listenerType, listenerInstance) 的方式成对存储的。
-        Object[] listeners = _listenerList.getListenerList();
-        for (int i = listeners.length - 2; i >= 0; i -= 2) {
-            if (listeners[i] == ModelTextListener.class)
-                ((ModelTextListener) listeners[i + 1]).modelTextChanged(event);
-        }
     }
 
 }

@@ -26,7 +26,6 @@ public abstract class ModifiedConfirmAction extends ModelAction {
             if(ret == JOptionPane.CANCEL_OPTION)
                 return false;
             if(ret == JOptionPane.YES_OPTION)
-            // todo
 //                if (!getModel().getSaveAction().doIt())
                 return false;
         }

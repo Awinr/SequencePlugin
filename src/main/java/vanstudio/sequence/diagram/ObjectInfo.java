@@ -6,13 +6,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * ObjectInfo指的是面板中第一层的对象 从左到右序列号为 0 1 2 3...
+ */
 public class ObjectInfo extends Info {
     private static final Logger LOGGER = Logger.getInstance(ObjectInfo.class);
     public static final String ACTOR_NAME = "Actor";
 
     private final String _name;
     private final String _fullName;
-    private final int _seq;
+    private final int _seq; // 这个是什么序号？
     private final List<MethodInfo> _methods = new ArrayList<>();
 
     public ObjectInfo(String name, List<String> attributes, int seq) {

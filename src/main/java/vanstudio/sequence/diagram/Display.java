@@ -26,7 +26,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.HashMap;
-
+// 监听器
 public class Display extends JComponent implements ModelTextListener, Scrollable, ConfigListener {
     private int _inset = 5;
 
@@ -65,10 +65,11 @@ public class Display extends JComponent implements ModelTextListener, Scrollable
         _model.removeModelTextListener(this);
     }
 
+    // 监听器监听到对应事件 ModelTextChanged
+    @Override
     public void modelTextChanged(ModelTextEvent event) {
         setQuery(event.getText());
     }
-    // todo query已经有了，该怎么查询呢
     private void setQuery(String query) {
         _diagram.build(query);
         _initialized = false;
@@ -76,6 +77,7 @@ public class Display extends JComponent implements ModelTextListener, Scrollable
         repaint();
     }
 
+    @Override
     public synchronized void paintComponent(Graphics g) {
         super.paintComponent(g);
 
@@ -101,6 +103,7 @@ public class Display extends JComponent implements ModelTextListener, Scrollable
         }
     }
 
+    @Override
     public String getToolTipText(MouseEvent event) {
         ScreenObject screenObject = _diagram.findScreenObjectByXY(event.getX(), event.getY());
         if (screenObject == null)
@@ -115,6 +118,7 @@ public class Display extends JComponent implements ModelTextListener, Scrollable
         revalidate();
     }
 
+    @Override
     public void revalidate() {
         super.revalidate();
         if (_displayHeader != null)
@@ -125,34 +129,41 @@ public class Display extends JComponent implements ModelTextListener, Scrollable
         return _diagram;
     }
 
+    @Override
     public Dimension getPreferredScrollableViewportSize() {
         return getPreferredSize();
     }
 
+    @Override
     public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
         return orientation == SwingConstants.VERTICAL ? 30 : 60;
     }
 
+    @Override
     public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
         return orientation == SwingConstants.VERTICAL ? 60 : 120;
     }
 
+    @Override
     public boolean getScrollableTracksViewportWidth() {
         return getParent() instanceof JViewport && getParent().getWidth() > getPreferredSize().width;
 //        return false;
     }
 
+    @Override
     public boolean getScrollableTracksViewportHeight() {
         return getParent() instanceof JViewport && getParent().getHeight() > getPreferredSize().height;
 //        return false;
     }
 
+    @Override
     public void addNotify() {
         super.addNotify();
         SequenceSettingsState.getInstance().addConfigListener(this);
         setScrollPaneHeaderView(getHeader());
     }
 
+    @Override
     public void removeNotify() {
         SequenceSettingsState.getInstance().removeConfigListener(this);
         setScrollPaneHeaderView(null);
@@ -172,7 +183,7 @@ public class Display extends JComponent implements ModelTextListener, Scrollable
             }
         }
     }
-
+    @Override
     public void configChanged() {
         _initialized = false;
         repaintAll();
@@ -321,10 +332,12 @@ public class Display extends JComponent implements ModelTextListener, Scrollable
             setToolTipText(" ");
         }
 
+        @Override
         public Dimension getPreferredSize() {
             return _diagram.getPreferredHeaderSize();
         }
 
+        @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
             Graphics2D g2 = (Graphics2D) g;
@@ -332,6 +345,7 @@ public class Display extends JComponent implements ModelTextListener, Scrollable
             _diagram.paintHeader(g2);
         }
 
+        @Override
         public String getToolTipText(MouseEvent event) {
             return Display.this.getToolTipText(event);
         }
@@ -340,6 +354,7 @@ public class Display extends JComponent implements ModelTextListener, Scrollable
     private class DisplayMouseAdapter extends MouseAdapter {
         private ScreenObject selectedScreenObject;
 
+        @Override
         public void mouseReleased(MouseEvent e) {
             if (selectedScreenObject != null) {
                 selectedScreenObject.setSelected(false);
@@ -383,10 +398,14 @@ public class Display extends JComponent implements ModelTextListener, Scrollable
         }
     }
 
+
     private static class NullListener implements SequenceListener {
+
+        @Override
         public void selectedScreenObject(ScreenObject screenObject) {
         }
 
+        @Override
         public void displayMenuForScreenObject(ScreenObject screenObject, int x, int y) {
         }
     }

@@ -212,7 +212,7 @@ public class SequencePanel extends JPanel implements ConfigListener {
                     buildNaviIndex(callStack, "1");
                     _titleName = callStack.getMethod().getTitleName();
                     String format = new SdtFormatter().format(callStack);
-                    generate(format);
+                    generate(format);// todo:线条哪里加的？如何绘制到屏幕上？
                     progressIndicator.processFinish();
                     return _titleName;
                 })
